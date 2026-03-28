@@ -105,20 +105,20 @@ export default function TestFlavorForm({
         <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
           <h3 className="mb-3 text-sm font-semibold text-gray-900 dark:text-white">Generated Captions</h3>
           {Array.isArray(result) ? (
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               {result.map((item: Record<string, unknown>, i: number) => {
                 const text = typeof item === 'string'
                   ? item
-                  : (item?.caption_text ?? item?.text ?? item?.caption ?? JSON.stringify(item))
+                  : (item?.content ?? item?.caption_text ?? item?.text ?? item?.caption ?? JSON.stringify(item))
                 return (
-                  <li key={i} className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700 dark:bg-gray-900 dark:text-gray-300">
+                  <li key={i} className="break-words rounded-lg bg-gray-50 p-4 text-sm leading-relaxed text-gray-700 dark:bg-gray-900 dark:text-gray-300">
                     {String(text)}
                   </li>
                 )
               })}
             </ul>
           ) : (
-            <pre className="overflow-auto rounded-lg bg-gray-50 p-3 text-xs text-gray-700 dark:bg-gray-900 dark:text-gray-300">
+            <pre className="overflow-auto whitespace-pre-wrap break-words rounded-lg bg-gray-50 p-3 text-xs text-gray-700 dark:bg-gray-900 dark:text-gray-300">
               {JSON.stringify(result, null, 2)}
             </pre>
           )}
