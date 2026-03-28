@@ -96,7 +96,7 @@ export default function FlavorList({ initialFlavors }: { initialFlavors: Flavor[
             {initialFlavors.map((flavor) => (
               <tr key={flavor.id}>
                 {editId === flavor.id ? (
-                  <EditRow flavor={flavor} onUpdate={handleUpdate} onCancel={() => setEditId(null)} />
+                  <EditRow flavor={flavor} onUpdate={handleUpdate} onCancel={() => setEditId(null)} isPending={isPending} />
                 ) : (
                   <>
                     <td className="px-4 py-3 text-gray-900 dark:text-white">{flavor.id}</td>
@@ -133,30 +133,22 @@ function EditRow({
   flavor,
   onUpdate,
   onCancel,
+  isPending,
 }: {
   flavor: Flavor
   onUpdate: (fd: FormData) => void
   onCancel: () => void
-  isPending?: boolean
+  isPending: boolean
 }) {
-  const [saving, setSaving] = useState(false)
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setSaving(true)
-    const fd = new FormData(e.currentTarget)
-    onUpdate(fd)
-  }
-
   return (
     <>
       <td className="px-4 py-3 text-gray-900 dark:text-white">{flavor.id}</td>
       <td className="px-4 py-3" colSpan={2}>
-        <form onSubmit={handleSubmit} className="flex items-center gap-2">
+        <form action={onUpdate} className="flex items-center gap-2">
           <input type="hidden" name="id" value={flavor.id} />
           <input name="slug" defaultValue={flavor.slug} required className="w-32 rounded border border-gray-300 px-2 py-1 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
           <input name="description" defaultValue={flavor.description ?? ''} className="w-48 rounded border border-gray-300 px-2 py-1 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
-          <button type="submit" disabled={saving} className="rounded bg-blue-600 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50">{saving ? 'Saving...' : 'Save'}</button>
+          <button type="submit" disabled={isPending} className="rounded bg-blue-600 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50">{isPending ? 'Saving...' : 'Save'}</button>
           <button type="button" onClick={onCancel} className="rounded border border-gray-300 px-3 py-1 text-xs text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300">Cancel</button>
         </form>
       </td>
