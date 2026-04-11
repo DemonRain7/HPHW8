@@ -78,61 +78,6 @@ export async function deleteHumorFlavor(formData: FormData) {
   return { error: null }
 }
 
-// ── Duplicate Humor Flavor (with all steps) ──
-
-export async function duplicateHumorFlavor(formData: FormData) {
-  const { supabase } = await requireAdmin()
-  const sourceId = Number(formData.get('id'))
-  const newSlug = String(formData.get('new_slug') ?? '')
-
-  if (!newSlug.trim()) return { error: 'A new unique slug is required.' }
-
-  // Fetch the source flavor
-  const { data: source, error: fetchErr } = await supabase
-    .from('humor_flavors')
-    .select('*')
-    .eq('id', sourceId)
-    .single()
-  if (fetchErr || !source) return { error: fetchErr?.message ?? 'Source flavor not found.' }
-
-  // Check slug uniqueness
-  const { data: existing } = await supabase
-    .from('humor_flavors')
-    .select('id')
-    .eq('slug', newSlug.trim())
-    .limit(1)
-  if (existing && existing.length > 0) return { error: `Slug "${newSlug}" already exists.` }
-
-  // Create the new flavor
-  const { data: newFlavor, error: insertErr } = await supabase
-    .from('humor_flavors')
-    .insert({ slug: newSlug.trim(), description: source.description })
-    .select('id')
-    .single()
-  if (insertErr || !newFlavor) return { error: insertErr?.message ?? 'Failed to create new flavor.' }
-
-  // Copy all steps from the source flavor
-  const { data: steps, error: stepsErr } = await supabase
-    .from('humor_flavor_steps')
-    .select('*')
-    .eq('humor_flavor_id', sourceId)
-    .order('order_by', { ascending: true })
-
-  if (stepsErr) return { error: stepsErr.message }
-
-  if (steps && steps.length > 0) {
-    const newSteps = steps.map(({ id, created_datetime_utc, ...rest }) => ({
-      ...rest,
-      humor_flavor_id: newFlavor.id,
-    }))
-    const { error: copyErr } = await supabase.from('humor_flavor_steps').insert(newSteps)
-    if (copyErr) return { error: copyErr.message }
-  }
-
-  revalidatePath('/chain')
-  return { error: null }
-}
-
 // ── Humor Flavor Steps CRUD ──
 
 export async function getHumorFlavorSteps(humorFlavorId: number) {
