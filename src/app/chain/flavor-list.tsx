@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
-import { createHumorFlavor, updateHumorFlavor, deleteHumorFlavor } from './actions'
+import { createHumorFlavor, updateHumorFlavor, deleteHumorFlavor, duplicateHumorFlavor } from './actions'
 
 type Flavor = {
   id: number
@@ -14,6 +14,7 @@ type Flavor = {
 export default function FlavorList({ initialFlavors }: { initialFlavors: Flavor[] }) {
   const [showCreate, setShowCreate] = useState(false)
   const [editId, setEditId] = useState<number | null>(null)
+  const [duplicateId, setDuplicateId] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
@@ -49,6 +50,19 @@ export default function FlavorList({ initialFlavors }: { initialFlavors: Flavor[
       else setError(null)
     })
   }
+
+  const handleDuplicate = (formData: FormData) => {
+    startTransition(async () => {
+      const result = await duplicateHumorFlavor(formData)
+      if (result.error) setError(result.error)
+      else {
+        setDuplicateId(null)
+        setError(null)
+      }
+    })
+  }
+
+  const duplicateFlavor = initialFlavors.find((f) => f.id === duplicateId)
 
   return (
     <div>
@@ -110,6 +124,7 @@ export default function FlavorList({ initialFlavors }: { initialFlavors: Flavor[
                     <td className="px-4 py-3">
                       <div className="flex gap-2">
                         <button onClick={() => setEditId(flavor.id)} className="text-xs font-medium text-blue-600 hover:underline dark:text-blue-400">Edit</button>
+                        <button onClick={() => setDuplicateId(flavor.id)} className="text-xs font-medium text-emerald-600 hover:underline dark:text-emerald-400">Duplicate</button>
                         <button onClick={() => handleDelete(flavor.id)} className="text-xs font-medium text-red-600 hover:underline dark:text-red-400">Delete</button>
                       </div>
                     </td>
@@ -125,6 +140,47 @@ export default function FlavorList({ initialFlavors }: { initialFlavors: Flavor[
           </tbody>
         </table>
       </div>
+
+      {/* Duplicate Flavor Modal */}
+      {duplicateId !== null && duplicateFlavor && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="mx-4 w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-xl dark:border-gray-700 dark:bg-gray-800">
+            <h3 className="mb-1 text-lg font-semibold text-gray-900 dark:text-white">Duplicate Flavor</h3>
+            <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+              Duplicating <span className="font-medium text-purple-600 dark:text-purple-400">{duplicateFlavor.slug}</span> and all its steps.
+            </p>
+            <form action={handleDuplicate}>
+              <input type="hidden" name="id" value={duplicateId} />
+              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                New Unique Slug
+              </label>
+              <input
+                name="new_slug"
+                required
+                defaultValue={`${duplicateFlavor.slug}-copy`}
+                className="mb-4 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                placeholder="e.g. my-flavor-copy"
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setDuplicateId(null)}
+                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isPending}
+                  className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  {isPending ? 'Duplicating...' : 'Duplicate'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
