@@ -255,6 +255,18 @@ export async function getHumorFlavorStepTypes() {
   return data ?? []
 }
 
+// Returns only flavors that have at least one step configured — avoids
+// sending un-testable flavors to the pipeline API, which 500s on empty chains.
+export async function getFlavorsWithSteps() {
+  const { supabase } = await requireAdmin()
+  const [{ data: flavors }, { data: steps }] = await Promise.all([
+    supabase.from('humor_flavors').select('*').order('id', { ascending: true }),
+    supabase.from('humor_flavor_steps').select('humor_flavor_id'),
+  ])
+  const withSteps = new Set((steps ?? []).map((s) => s.humor_flavor_id))
+  return (flavors ?? []).filter((f) => withSteps.has(f.id))
+}
+
 // ── Test Flavor (generate captions via REST API) ──
 
 export async function getTestImages() {
@@ -300,8 +312,12 @@ export async function testHumorFlavor(formData: FormData) {
     const body = await response.json().catch(() => null)
 
     if (!response.ok) {
+      const apiMessage =
+        body && typeof body === 'object' && 'message' in body
+          ? String((body as { message: unknown }).message)
+          : `API returned ${response.status}`
       return {
-        error: `API error (${response.status}): ${JSON.stringify(body)}`,
+        error: apiMessage,
         captions: null,
       }
     }

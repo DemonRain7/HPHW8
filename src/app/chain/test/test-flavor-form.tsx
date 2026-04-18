@@ -38,6 +38,18 @@ export default function TestFlavorForm({
 
   const selectedImg = images.find((i) => i.id === selectedImage)
 
+  if (flavors.length === 0) {
+    return (
+      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
+        <p className="text-sm font-medium text-amber-800 dark:text-amber-300">No testable flavors</p>
+        <p className="mt-1 text-sm text-amber-700 dark:text-amber-400">
+          None of your humor flavors have any steps configured yet. Open a flavor from the{' '}
+          <a href="/chain" className="font-semibold underline">flavor list</a> and add at least one step before testing.
+        </p>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2">
