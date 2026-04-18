@@ -41,8 +41,17 @@ export async function getHumorFlavors() {
 
 export async function createHumorFlavor(formData: FormData) {
   const { supabase } = await requireAdmin()
-  const slug = String(formData.get('slug') ?? '')
+  const slug = String(formData.get('slug') ?? '').trim()
   const description = String(formData.get('description') ?? '')
+
+  if (!slug) return { error: 'Slug is required.' }
+
+  const { data: existing } = await supabase
+    .from('humor_flavors')
+    .select('id')
+    .eq('slug', slug)
+    .limit(1)
+  if (existing && existing.length > 0) return { error: `Slug "${slug}" already exists.` }
 
   const { error } = await supabase.from('humor_flavors').insert({
     slug,
@@ -56,11 +65,20 @@ export async function createHumorFlavor(formData: FormData) {
 export async function updateHumorFlavor(formData: FormData) {
   const { supabase } = await requireAdmin()
   const id = Number(formData.get('id'))
-  const slug = String(formData.get('slug') ?? '')
+  const slug = String(formData.get('slug') ?? '').trim()
   const description = String(formData.get('description') ?? '')
 
   const updates: Record<string, string | null> = {}
-  if (slug) updates.slug = slug
+  if (slug) {
+    const { data: existing } = await supabase
+      .from('humor_flavors')
+      .select('id')
+      .eq('slug', slug)
+      .neq('id', id)
+      .limit(1)
+    if (existing && existing.length > 0) return { error: `Slug "${slug}" already exists.` }
+    updates.slug = slug
+  }
   updates.description = description || null
 
   const { error } = await supabase.from('humor_flavors').update(updates).eq('id', id)
